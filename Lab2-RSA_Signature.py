@@ -1,53 +1,84 @@
-import math
+#include <bits/stdc++.h>
+#include <boost/multiprecision/cpp_int.hpp>
 
+using namespace std;
+using namespace boost::multiprecision;
 
-def power(x, y, M):
+int1024_t gcd(int1024_t a, int1024_t b) {
+    if (b == 0)
+        return a;
+    return gcd(b, a % b);
+}
 
-    if (y == 0):
-        return 1
+int1024_t modInverse(int1024_t a, int1024_t m) {
+    int1024_t m0 = m, t, q;
+    int1024_t x0 = 0, x1 = 1;
 
-    p = power(x, y // 2, M) % M
-    p = (p * p) % M
+    if (m == 1)
+        return 0;
 
-    if (y % 2 == 0):
-        return p
-    else:
-        return ((x * p) % M)
+    while (a > 1) {
+        // q is quotient
+        q = a / m;
+        t = m;
 
+        // m is remainder now, process same as Euclid's algo
+        m = a % m, a = t;
+        t = x0;
 
-def modInverse(A, M):
+        x0 = x1 - q * x0;
+        x1 = t;
+    }
 
-    g = math.gcd(A, M)
+    // Make x1 positive
+    if (x1 < 0)
+        x1 += m0;
 
-    if (g != 1):
-        print("Inverse doesn't exist")
-    else:
-        return power(A, M - 2, M)
+    return x1;
+}
 
+int1024_t powerMod(int1024_t base, int1024_t exp, int1024_t mod) {
+    int1024_t result = 1;
+    base = base % mod;
+    while (exp > 0) {
+        if (exp % 2 == 1)
+            result = (result * base) % mod;
+        exp = exp >> 1;
+        base = (base * base) % mod;
+    }
+    return result;
+}
 
-p = 641452276181854641108656711212426007392032535624286593352297230739655033308758795291525780661276052003446415402951276859305010843331485955731317776341
-q = 550260068503913816794775756748734957217525557101277352617939473192429642846467658900405045171852174534967724674742228789190327015236678532191013890529
+int main() {
+    int1024_t p, q, n, phi, e, d, msg;
 
-n = p*q
-phi = (p-1) * (q-1)
+    cout << "Enter prime numbers p and q: ";
+    cin >> p >> q;
+    cout << "Enter the message to be signed: ";
+    cin >> msg;
 
-val = 53453452354235252354234234235234523456243563264
-e = 542909292734240323571856928357
+    n = p * q;
+    phi = (p - 1) * (q - 1);
 
-print("e : ", e)
-d = modInverse(e, n)
+    // Find e such that 1 < e < phi and gcd(e, phi) = 1
+    for (e = 2; e < phi; e++) {
+        if (gcd(e, phi) == 1)
+            break;
+    }
 
-print("d : ", d)
-m = int(input("Enter a message : "))
+    // Compute d to satisfy d*e ≡ 1 (mod phi)
+    d = modInverse(e, phi);
 
-s = pow(m, d, n)
-print("S : ", s)
+    cout << "Public Key: " << e << endl;
+    cout << "Private Key: " << d << endl;
 
-mm = pow(s, e, n)
-print("Sign verification : ", mm)
+    // Message signing (encryption with private key)
+    int1024_t signature = powerMod(msg, d, n);
+    cout << "Message Signing: " << signature << endl;
 
+    // Signature verification (decryption with public key)
+    int1024_t verification = powerMod(signature, e, n);
+    cout << "Sign Verification: " << verification << endl;
 
-if mm == m:
-    print("Verified")
-else:
-    print("Not Verified")
+    return 0;
+}
